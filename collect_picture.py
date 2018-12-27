@@ -51,13 +51,18 @@ def classifyPictures(path, dst):
             dst_name = pwd + '\\'+ t.replace(":", "").replace(" ", "_") + e
 
             i = 1
+            restart = False
             while os.path.exists(dst_name):
                 if filecmp.cmp(filename, dst_name):
                     logging.info("%s already exist." % filename)
+                    restart = True
                     break
                 else:
                     dst_name = pwd + '\\'+ t.replace(":", "").replace(" ", "_") + "_" + str(i) + e
                 i = i + 1
+
+            if restart:
+                continue
 
             logging.info("Collect File %s to %s." % (filename, dst_name))
             if not os.path.exists(pwd):
@@ -70,17 +75,23 @@ def classifyVideo(path, dst):
     for root, dirs, files in os.walk(path, True):
         dir = []
         for filename in files:
-            filename = os.path.join(root, filename)
+            
             f, e = os.path.splitext(filename)
             if e.lower() not in ('.mov', '.mp4'):
-                logging.info("%s is not collected." % filename)
+                logging.info("%s is not collected." % os.path.join(root, filename))
                 continue
 
             pwd = dst + "\\" + "video"
+            dst_name = pwd + "\\" + filename
+            if os.path.exists(dst_name):
+                logging.info("%s already exist." % os.path.join(root, filename))
+                continue
+            
             if not os.path.exists(pwd):
                os.mkdir(pwd)
 
-            shutil.copy2(filename, pwd)
+            filename = os.path.join(root, filename)
+            shutil.copy2(filename, dst_name)
             
     
 def main(argv):
