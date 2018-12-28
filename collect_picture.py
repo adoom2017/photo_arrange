@@ -11,7 +11,6 @@ import ffmpeg
 class ReadFailException(Exception):
     pass
 
-
 def getOrignalDate(filename):
     try:
         fd = open(filename, 'rb')
@@ -28,6 +27,21 @@ def getOrignalDate(filename):
             pass
 
     return null
+	
+def mainLoop(path, dst):
+	for root, dirs, files in os.walk(path, True):
+        for filename in files:
+			absolute_file = os.path.join(root, filename)
+
+            f, e = os.path.splitext(filename)
+            if e.lower() in ('.jpg', '.png'):
+                # 图片处理
+                continue
+			elif e.lower() in ('.mov', '.mp4'):
+				# 视频处理
+			else:
+				logging.info("%s is not collected." % absolute_file)
+	
 
 def classifyPictures(path, dst):
     for root, dirs, files in os.walk(path, True):
