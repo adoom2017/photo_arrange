@@ -9,6 +9,10 @@ import time
 import exifread
 import ffmpeg
 
+VIDEO_FOLD = "video"
+UNCLASSIFY_FOLD = "unclassify"
+CLASSIFY_FOLD = "photo"
+
 class ReadFailException(Exception):
     pass
 
@@ -29,81 +33,100 @@ def getOrignalDate(filename):
 
     return Null
 
-def mainLoop(path, dst):
+def mainLoop(path):
+    logging.info("Process %s." % path)
     for root, dirs, files in os.walk(path, True):
         for filename in files:
             absolute_file = os.path.join(root, filename)
-            f, e = os.path.splitext(absolute_file)
-            if e.lower() in ('.jpg', '.png'):
-                classifyPictures(absolute_file, dst, e)
-            elif e.lower() in ('.mov', '.mp4'):
-                classifyVideo(absolute_file, dst)
+            name, suffix = os.path.splitext(absolute_file)
+            if suffix.lower() in ('.jpg', '.png'):
+                classifyPictures(absolute_file)
+            elif suffix.lower() in ('.mov', '.mp4'):
+                classifyVideo(absolute_file)
             else:
                 logging.info("%s is not collected." % absolute_file)
 
-def classifyPictures(filename, dst, suffix):
+def copyFile(filename, dstFileName):
+    i = 1
+    while os.path.exists(dstFileName):
+        if filecmp.cmp(filename, dstFileName):
+            logging.info("%s already exist." % filename)
+            return
+        else:
+            name, suffix = os.path.splitext(dstFileName)
+            dstFileName = name + "_" + str(i) + suffix
+            i = i + 1
+
+    logging.info("Collect File %s to %s." % (filename, dstFileName))
+    if not os.path.exists(os.path.dirname(dstFileName)):
+        os.makedirs(os.path.dirname(dstFileName))
+
+    shutil.copy2(filename, dstFileName)
+
+def classifyPictures(filename):
         time=""
         try:
             time = getOrignalDate(filename)
         except Exception:
             logging.info("Can not get time for %s." % filename)
+            dstFileName = UNCLASSIFY_FOLD + "\\" + os.path.basename(filename)
+            copyFile(filename, dstFileName)
             return
 
-        fold = dst +'\\'+ time.replace(":", "-")[:7]
-        dstFileName = fold + '\\'+ time.replace(":", "").replace(" ", "_") + suffix
+        name, suffix = os.path.splitext(filename)
+        dstFileName = CLASSIFY_FOLD +'\\'+ time.replace(":", "-")[:7] + '\\'+ time.replace(":", "").replace(" ", "_") + suffix
 
-        i = 1
-        while os.path.exists(dstFileName):
-            if filecmp.cmp(filename, dstFileName):
-                logging.info("%s already exist." % filename)
-                return
-            else:
-                dstFileName = fold + '\\'+ time.replace(":", "").replace(" ", "_") + "_" + str(i) + suffix
-                i = i + 1
+        copyFile(filename, dstFileName)
 
-        logging.info("Collect File %s to %s." % (filename, dstFileName))
-        if not os.path.exists(fold):
-            os.mkdir(fold)
-
-        shutil.copy2(filename, dstFileName)
-
-def classifyVideo(filename, dst):
-    fold = dst + "\\" + "video"
-    dstFileName = fold + "\\" + os.path.basename(filename)
-    if os.path.exists(dstFileName):
-        logging.info("%s already exist." % filename)
-        return
-    
-    if not os.path.exists(fold):
-        os.mkdir(fold)
-
-    shutil.copy2(filename, dstFileName)
-            
+def classifyVideo(filename):
+    dstFileName = VIDEO_FOLD + "\\" + os.path.basename(filename)
+    copyFile(filename, dstFileName)
     
 def main(argv):
+    global VIDEO_FOLD
+    global UNCLASSIFY_FOLD
+    global CLASSIFY_FOLD
+
     fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(message)s'
      
     logging.basicConfig(filename='collect.log',level=logging.INFO, format=fmt)
     
-    input_dir = ""
     output_dir = ""
+    config_dir = ""
 
     try:
-        opts, args = getopt.getopt(argv, "hi:o:", ["ifile=", "ofile="])
+        opts, args = getopt.getopt(argv, "hc:o:", ["ofile=", "config="])
     except getopt.GetoptError:
-        print(sys.argv[0] + " -i <inputfile> -o <outputfile>")
+        print(sys.argv[0] + " -c <pathfile> -o <outputpath>")
         sys.exit(2)
 
     for opt, arg in opts:
         if opt == "-h":
-            print(sys.argv[0] + " -i <inputfile> -o <outputfile>")
+            print(sys.argv[0] + " -c <pathfile> -o <outputpath>")
             sys.exit()
-        elif opt in ("-i", "--ifile"):
-            input_dir = arg
         elif opt in ("-o", "--ofile"):
             output_dir = arg
+        elif opt in ("-c", "--config"):
+            config_dir = arg
+
+    if output_dir != "":
+        VIDEO_FOLD = output_dir + "\\" + VIDEO_FOLD
+        UNCLASSIFY_FOLD = output_dir + "\\" + UNCLASSIFY_FOLD
+        CLASSIFY_FOLD = output_dir + "\\" + CLASSIFY_FOLD
     
-    mainLoop(input_dir, output_dir)
+    if config_dir != "":
+        pass
+    else:
+        config_dir = "PathProcess.txt"
+
+    try:
+        with open(config_dir, "r") as configFile:
+            line = configFile.readline()
+            while line:
+                mainLoop(str.strip(line))
+                line = configFile.readline()
+    except:
+        print("%s File is not found." % config_dir)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
