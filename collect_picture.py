@@ -1,11 +1,12 @@
-import shutil
-import os
-import time
-import exifread
 import filecmp
 import getopt
-import sys
 import logging
+import os
+import shutil
+import sys
+import time
+
+import exifread
 import ffmpeg
 
 class ReadFailException(Exception):
@@ -26,86 +27,57 @@ def getOrignalDate(filename):
             logging.error("No exif: %s." % filename)
             pass
 
-    return null
-	
+    return Null
+
 def mainLoop(path, dst):
-	for root, dirs, files in os.walk(path, True):
-        for filename in files:
-			absolute_file = os.path.join(root, filename)
-
-            f, e = os.path.splitext(filename)
-            if e.lower() in ('.jpg', '.png'):
-                # 图片处理
-                continue
-			elif e.lower() in ('.mov', '.mp4'):
-				# 视频处理
-			else:
-				logging.info("%s is not collected." % absolute_file)
-	
-
-def classifyPictures(path, dst):
     for root, dirs, files in os.walk(path, True):
-        dir = []
         for filename in files:
-            filename = os.path.join(root, filename)
-            f, e = os.path.splitext(filename)
-            if e.lower() not in ('.jpg', '.png'):
-                logging.info("%s is not collected." % filename)
-                continue
+            absolute_file = os.path.join(root, filename)
+            f, e = os.path.splitext(absolute_file)
+            if e.lower() in ('.jpg', '.png'):
+                classifyPictures(absolute_file, dst, e)
+            elif e.lower() in ('.mov', '.mp4'):
+                classifyVideo(absolute_file, dst)
+            else:
+                logging.info("%s is not collected." % absolute_file)
 
-            t=""
-            try:
-                t = getOrignalDate(filename)
-            except Exception:
-                logging.info("Can not get time for %s." % filename)
-                continue
+def classifyPictures(filename, dst, suffix):
+        time=""
+        try:
+            time = getOrignalDate(filename)
+        except Exception:
+            logging.info("Can not get time for %s." % filename)
+            return
 
-            fold = t.replace(":", "-")[:7]
-            pwd = dst +'\\'+ fold
-            dst_name = pwd + '\\'+ t.replace(":", "").replace(" ", "_") + e
+        fold = dst +'\\'+ time.replace(":", "-")[:7]
+        dstFileName = fold + '\\'+ time.replace(":", "").replace(" ", "_") + suffix
 
-            i = 1
-            restart = False
-            while os.path.exists(dst_name):
-                if filecmp.cmp(filename, dst_name):
-                    logging.info("%s already exist." % filename)
-                    restart = True
-                    break
-                else:
-                    dst_name = pwd + '\\'+ t.replace(":", "").replace(" ", "_") + "_" + str(i) + e
+        i = 1
+        while os.path.exists(dstFileName):
+            if filecmp.cmp(filename, dstFileName):
+                logging.info("%s already exist." % filename)
+                return
+            else:
+                dstFileName = fold + '\\'+ time.replace(":", "").replace(" ", "_") + "_" + str(i) + suffix
                 i = i + 1
 
-            if restart:
-                continue
+        logging.info("Collect File %s to %s." % (filename, dstFileName))
+        if not os.path.exists(fold):
+            os.mkdir(fold)
 
-            logging.info("Collect File %s to %s." % (filename, dst_name))
-            if not os.path.exists(pwd):
-               os.mkdir(pwd)
+        shutil.copy2(filename, dstFileName)
 
-            shutil.copy2(filename, dst_name)
-            #os.remove(filename)
+def classifyVideo(filename, dst):
+    fold = dst + "\\" + "video"
+    dstFileName = fold + "\\" + os.path.basename(filename)
+    if os.path.exists(dstFileName):
+        logging.info("%s already exist." % filename)
+        return
+    
+    if not os.path.exists(fold):
+        os.mkdir(fold)
 
-def classifyVideo(path, dst):
-    for root, dirs, files in os.walk(path, True):
-        dir = []
-        for filename in files:
-            
-            f, e = os.path.splitext(filename)
-            if e.lower() not in ('.mov', '.mp4'):
-                logging.info("%s is not collected." % os.path.join(root, filename))
-                continue
-
-            pwd = dst + "\\" + "video"
-            dst_name = pwd + "\\" + filename
-            if os.path.exists(dst_name):
-                logging.info("%s already exist." % os.path.join(root, filename))
-                continue
-            
-            if not os.path.exists(pwd):
-               os.mkdir(pwd)
-
-            filename = os.path.join(root, filename)
-            shutil.copy2(filename, dst_name)
+    shutil.copy2(filename, dstFileName)
             
     
 def main(argv):
@@ -131,8 +103,7 @@ def main(argv):
         elif opt in ("-o", "--ofile"):
             output_dir = arg
     
-    classifyPictures(input_dir, output_dir)
-    classifyVideo(input_dir, output_dir)
+    mainLoop(input_dir, output_dir)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
