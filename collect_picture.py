@@ -12,6 +12,7 @@ import ffmpeg
 VIDEO_FOLD = "video"
 UNCLASSIFY_FOLD = "unclassify"
 CLASSIFY_FOLD = "photo"
+MOVE_FILE = False
 
 class ReadFailException(Exception):
     pass
@@ -60,8 +61,10 @@ def copyFile(filename, dstFileName):
     logging.info("Collect File %s to %s." % (filename, dstFileName))
     if not os.path.exists(os.path.dirname(dstFileName)):
         os.makedirs(os.path.dirname(dstFileName))
-
-    shutil.copy2(filename, dstFileName)
+    if MOVE_FILE:
+        shutil.move(filename, dstFileName)
+    else:
+        shutil.copy2(filename, dstFileName)
 
 def classifyPictures(filename):
         time=""
@@ -86,16 +89,17 @@ def main(argv):
     global VIDEO_FOLD
     global UNCLASSIFY_FOLD
     global CLASSIFY_FOLD
+    global MOVE_FILE
 
     fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(message)s'
      
     logging.basicConfig(filename='collect.log',level=logging.INFO, format=fmt)
     
-    output_dir = ""
+    output_dir =  "PathProcess.txt"
     config_dir = ""
 
     try:
-        opts, args = getopt.getopt(argv, "hc:o:", ["ofile=", "config="])
+        opts, args = getopt.getopt(argv, "hmc:o:", ["help", "move", "config=", "ofile="])
     except getopt.GetoptError:
         print(sys.argv[0] + " -c <pathfile> -o <outputpath>")
         sys.exit(2)
@@ -108,16 +112,13 @@ def main(argv):
             output_dir = arg
         elif opt in ("-c", "--config"):
             config_dir = arg
+        elif opt in ("-m", "--move"):
+            MOVE_FILE = True
 
     if output_dir != "":
         VIDEO_FOLD = output_dir + "\\" + VIDEO_FOLD
         UNCLASSIFY_FOLD = output_dir + "\\" + UNCLASSIFY_FOLD
         CLASSIFY_FOLD = output_dir + "\\" + CLASSIFY_FOLD
-    
-    if config_dir != "":
-        pass
-    else:
-        config_dir = "PathProcess.txt"
 
     try:
         with open(config_dir, "r") as configFile:
