@@ -95,8 +95,8 @@ def main(argv):
      
     logging.basicConfig(filename='collect.log',level=logging.INFO, format=fmt)
     
-    output_dir =  "PathProcess.txt"
-    config_dir = ""
+    output_dir = "collect"
+    config_dir = "PathProcess.txt"
 
     try:
         opts, args = getopt.getopt(argv, "hmc:o:", ["help", "move", "config=", "ofile="])
