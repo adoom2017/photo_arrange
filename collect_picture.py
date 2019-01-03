@@ -70,12 +70,12 @@ def mainLoop(path):
 
 def copyFile(srcFileName, dstFileName):
     i = 1
+    name, suffix = os.path.splitext(dstFileName)
     while os.path.exists(dstFileName):
         if filecmp.cmp(srcFileName, dstFileName):
             logging.info("%s already exist." % srcFileName)
             return
         else:
-            name, suffix = os.path.splitext(dstFileName)
             dstFileName = name + "_" + str(i) + suffix
             i = i + 1
 
