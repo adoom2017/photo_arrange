@@ -79,7 +79,7 @@ def copyFile(srcFileName, dstFileName):
             dstFileName = name + "_" + str(i) + suffix
             i = i + 1
 
-    logging.info("Collect File %s to %s." % (srcFileName, dstFileName))
+    print("Collect File %s to %s." % (srcFileName, dstFileName))
     if not os.path.exists(os.path.dirname(dstFileName)):
         os.makedirs(os.path.dirname(dstFileName))
     if MOVE_FILE:
