@@ -1,6 +1,8 @@
 # photo_classify
 
-1. 安装Python3
+依赖库：re, exifread, hachoir
+
+1. 安装Python3后，使用pip install安装对应的依赖库
 2. 将需要整理照片的路径写到一个文件中，每个路径一行
 3. python collect.py -c path-file -o output-path
 
