@@ -147,12 +147,13 @@ def main(argv):
     logging.basicConfig(filename='collect.log', level=logging.INFO, format=fmt)
     
     output_dir = ""
+    input_dir = ""
     config_dir = "PathProcess.txt"
 
     try:
-        opts, args = getopt.getopt(argv, "hmc:o:", ["help", "move", "config=", "ofile="])
+        opts, args = getopt.getopt(argv, "hmi:c:o:", ["help", "move", "ifile=", "config=", "ofile="])
     except getopt.GetoptError:
-        print(sys.argv[0] + " -c <pathfile> -o <outputpath>")
+        print(sys.argv[0] + " -c <pathfile> or -i <inputpath> -o <outputpath>")
         sys.exit(2)
 
     for opt, arg in opts:
@@ -161,20 +162,28 @@ def main(argv):
             sys.exit()
         elif opt in ("-o", "--ofile"):
             output_dir = arg
+        elif opt in ("-i", "--ifile"):
+            input_dir = arg
         elif opt in ("-c", "--config"):
             config_dir = arg
         elif opt in ("-m", "--move"):
             MOVE_FILE = True
-
+    
     try:
-        with open(config_dir, "r") as configFile:
-            line = configFile.readline()
-            while line:
-                if line.lstrip().startswith("#"):
-                    line = configFile.readline()
-                    continue
-                mainLoop(str.strip(line), output_dir)
+        if len(input_dir) != 0:    
+            mainLoop(input_dir, output_dir)
+        elif len(config_dir) != 0:
+            with open(config_dir, "r") as configFile:
                 line = configFile.readline()
+                while line:
+                    if line.lstrip().startswith("#"):
+                        line = configFile.readline()
+                        continue
+                    mainLoop(str.strip(line), output_dir)
+                    line = configFile.readline()
+        else:
+            print(sys.argv[0] + " -c <pathfile> or -i <inputpath> -o <outputpath>")
+            sys.exit(2)
     except Exception as e:
         logging.exception(e)
 
