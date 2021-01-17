@@ -18,13 +18,11 @@ class MediaArrange:
         self.move = move
 
     def genAbsolutePath(self, in_file):
-        name, suffix = os.path.splitext(in_file)
-        self.suffix = suffix
-        self.name = name
+        _, suffix = os.path.splitext(in_file)
         create_time = Metadata(in_file).getCreateTime()
 
         if create_time != None:
-            dst_file_name = self.output +'\\'+ create_time[0:4] + "-" + create_time[4:6] + '\\' + create_time + self.suffix
+            dst_file_name = self.output +'\\'+ create_time[0:4] + "-" + create_time[4:6] + '\\' + create_time + suffix
         else:
             dst_file_name = self.output + "\\unclassify" + "\\" + os.path.basename(in_file)
 
@@ -37,7 +35,8 @@ class MediaArrange:
                 logging.info("%s already exist." % in_file)
                 return
             else:
-                out_file = self.name + "_" + str(i) + self.suffix
+                name, suffix = os.path.splitext(out_file)
+                out_file = name + "_" + str(i) + suffix
                 i = i + 1
 
         logging.info("Collect File %s to %s." % (in_file, out_file))
@@ -51,13 +50,14 @@ class MediaArrange:
             shutil.copy2(in_file, out_file)
 
     def arrange(self):
-        logging.info("Begin Process %s." % self.input)
+        logging.info("Begin Process %s, Output path: %s." % (self.input, self.output))
         for root, _, files in os.walk(self.input, True):
             for filename in files:
                 in_file = os.path.join(root, filename)
                 out_file = self.genAbsolutePath(in_file)
+                print("Infile %s, Outfile %s." % (in_file, out_file))
                 self.copy(in_file, out_file)
-        logging.info("End Process %s." % self.input)
+        logging.info("End Process %s, Output path: %s." % (self.input, self.output))
 
 def main(argv):
     fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(message)s'
@@ -91,13 +91,14 @@ def main(argv):
         if len(input_dir) != 0:
             MediaArrange(input_dir, output_dir, move_file).arrange()
         elif len(config_dir) != 0:
+            print("Output dir: %s." % output_dir)
             with open(config_dir, "r") as configFile:
                 line = configFile.readline()
                 while line:
                     if line.lstrip().startswith("#"):
                         line = configFile.readline()
                         continue
-                    MediaArrange(input_dir, output_dir, move_file).arrange()
+                    MediaArrange(line.strip(), output_dir, move_file).arrange()
                     line = configFile.readline()
         else:
             print(sys.argv[0] + " -c <pathfile> or -i <inputpath> -o <outputpath>")
