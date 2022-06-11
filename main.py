@@ -22,9 +22,9 @@ class MediaArrange:
         create_time = Metadata(in_file).getCreateTime()
 
         if create_time != None:
-            dst_file_name = self.output +'\\'+ create_time[0:4] + "-" + create_time[4:6] + '\\' + create_time + suffix
+            dst_file_name = self.output +'/'+ create_time[0:4] + "-" + create_time[4:6] + '/' + create_time + suffix
         else:
-            dst_file_name = self.output + "\\unclassify" + "\\" + os.path.basename(in_file)
+            dst_file_name = self.output + "/unclassify" + "/" + os.path.basename(in_file)
 
         return dst_file_name
 
