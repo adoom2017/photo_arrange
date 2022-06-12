@@ -19,7 +19,12 @@ class Metadata:
         self.path = path
 
     def getCreateTime(self):
-        parser = createParser(self.path)
+        try:
+            parser = createParser(self.path)
+        except Exception as err:
+            logging.error("File %s parser error: %s." % (self.path, err))
+            parser = None
+
         ftime = None
         if parser:
             with parser:
