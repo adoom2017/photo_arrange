@@ -36,7 +36,10 @@ class MediaArrange:
                 return
             else:
                 name, suffix = os.path.splitext(out_file)
-                out_file = name + "_" + str(i) + suffix
+                if i == 1:
+                    out_file = name + "_" + str(i) + suffix
+                else:
+                    out_file = out_file.replace("_" + str(i-1) + suffix, "_" + str(i) + suffix)
                 i = i + 1
 
         logging.info("Collect File %s to %s." % (in_file, out_file))
